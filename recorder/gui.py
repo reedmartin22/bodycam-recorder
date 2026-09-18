@@ -174,28 +174,22 @@ class BodyCamApp:
             self.error_var.set(f"Preview update failed: {exc}")
 
     def enroll_device(self) -> None:
+        if self.recorder.is_recording:
+            messagebox.showinfo(
+                "Stop recording first",
+                "Stop and save the current event before switching to a different enrolled device.",
+                parent=self.root,
+            )
+            return
         dialog = EnrollmentDialog(self.root, self.device)
         self.root.wait_window(dialog)
         if dialog.result is None:
             return
-        had_recording, saved_path = self._finalize_active_recording()
         self.registry.upsert_device(dialog.result)
         self.device = dialog.result
         self.device_name_var.set(self.device.friendly_name)
         self.device_id_var.set(self.device.device_id)
         self._connect_stream(reset_buffer=True)
-        if saved_path is not None:
-            messagebox.showinfo(
-                "Recording saved",
-                f"Active recording finalized before switching devices:\n{saved_path}",
-                parent=self.root,
-            )
-        elif had_recording:
-            messagebox.showinfo(
-                "No frames captured",
-                "The previous event was finalized before switching devices, but no camera frames had been captured yet.",
-                parent=self.root,
-            )
 
     def start_event(self) -> None:
         started = self.recorder.start_event(
@@ -230,6 +224,7 @@ class BodyCamApp:
 
     def open_recordings_folder(self) -> None:
         path = str(self.recorder.recordings_dir)
+        self.recorder.recordings_dir.mkdir(parents=True, exist_ok=True)
         try:
             if platform.system() == "Windows":
                 os.startfile(path)  # type: ignore[attr-defined]
