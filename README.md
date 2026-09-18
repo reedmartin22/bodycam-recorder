@@ -124,7 +124,16 @@ The executable is created at:
 dist/BodyCamRecorder/BodyCamRecorder.exe
 ```
 
-Copy `data/devices.json` beside the extracted build as `dist/BodyCamRecorder/data/devices.json`, or let the app create a default local simulator entry on first run.
+For a packaged app, keep the registry beside the executable as `data/devices.json` inside the extracted app folder, for example:
+
+```text
+BodyCamRecorder/
+  BodyCamRecorder.exe
+  data/
+    devices.json
+```
+
+If `data/devices.json` is missing, the app creates a default local simulator entry on first run.
 
 ## Download the compiled executable from GitHub Actions
 

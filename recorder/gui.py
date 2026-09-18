@@ -125,6 +125,7 @@ class BodyCamApp:
     def _connect_stream(self, reset_buffer: bool) -> None:
         if reset_buffer and self.recorder.is_recording:
             raise RuntimeError("Cannot reset the recorder while an event recording is active.")
+        self.stream_source_id += 1
         if self.stream_client is not None:
             self.stream_client.stop()
         if reset_buffer:
@@ -136,7 +137,6 @@ class BodyCamApp:
             self.recording_var.set("Idle")
         self.error_var.set("")
         self.connection_var.set("Connecting...")
-        self.stream_source_id += 1
         self.stream_client = MjpegStreamClient(
             self.device.stream_url,
             self.events.put,
