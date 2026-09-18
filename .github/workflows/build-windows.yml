@@ -33,6 +33,18 @@ jobs:
       - name: Build GUI executable
         run: python -m PyInstaller --noconfirm --windowed --name BodyCamRecorder recorder/__main__.py
 
+      - name: Smoke test packaged app
+        shell: pwsh
+        run: |
+          $process = Start-Process -FilePath "dist/BodyCamRecorder/BodyCamRecorder.exe" -PassThru
+          Start-Sleep -Seconds 5
+          if ($null -ne $process.ExitCode -and $process.ExitCode -ne 0) {
+            throw "Packaged app exited with code $($process.ExitCode)"
+          }
+          if (-not $process.HasExited) {
+            Stop-Process -Id $process.Id
+          }
+
       - name: Add default device registry
         shell: pwsh
         run: |

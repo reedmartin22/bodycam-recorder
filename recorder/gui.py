@@ -189,7 +189,7 @@ class BodyCamApp:
         self.device = dialog.result
         self.device_name_var.set(self.device.friendly_name)
         self.device_id_var.set(self.device.device_id)
-        self._connect_stream(reset_buffer=True)
+        self._connect_stream(reset_buffer=False)
 
     def start_event(self) -> None:
         started = self.recorder.start_event(
