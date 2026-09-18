@@ -104,16 +104,30 @@ class SimulatorHandler(BaseHTTPRequestHandler):
         return
 
 
-def parse_args() -> argparse.Namespace:
+def positive_int(value: str) -> int:
+    parsed = int(value)
+    if parsed <= 0:
+        raise argparse.ArgumentTypeError("value must be greater than zero")
+    return parsed
+
+
+def port_number(value: str) -> int:
+    parsed = int(value)
+    if parsed <= 0 or parsed > 65535:
+        raise argparse.ArgumentTypeError("port must be between 1 and 65535")
+    return parsed
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run the local BodyCam Recorder simulator.")
     parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--port", type=int, default=8000)
-    parser.add_argument("--width", type=int, default=640)
-    parser.add_argument("--height", type=int, default=480)
-    parser.add_argument("--fps", type=int, default=10)
+    parser.add_argument("--port", type=port_number, default=8000)
+    parser.add_argument("--width", type=positive_int, default=640)
+    parser.add_argument("--height", type=positive_int, default=480)
+    parser.add_argument("--fps", type=positive_int, default=10)
     parser.add_argument("--device-id", default="SIMULATOR-LOCAL")
     parser.add_argument("--friendly-name", default="Local Simulated Camera")
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def main() -> int:

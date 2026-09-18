@@ -68,6 +68,22 @@ class GuiLogicTests(unittest.TestCase):
         self.assertTrue(app.stream_client.started)
         self.assertEqual(2, app.stream_client.source_id)
 
+    def test_connect_stream_refuses_reset_during_active_recording(self) -> None:
+        app = object.__new__(BodyCamApp)
+        recorder = RecorderEngine(buffer_seconds=30, target_fps=10)
+        recorder.start_event("CAM-001", "Front Camera", timestamp=1.0)
+        app.stream_client = None
+        app.recorder = recorder
+        app.recording_var = DummyVar()
+        app.error_var = DummyVar()
+        app.connection_var = DummyVar()
+        app.device = DummyDevice()
+        app.events = None
+        app.stream_source_id = 0
+
+        with self.assertRaises(RuntimeError):
+            BodyCamApp._connect_stream(app, reset_buffer=True)
+
     def test_stop_and_save_warns_when_event_has_no_frames(self) -> None:
         app = object.__new__(BodyCamApp)
         recorder = RecorderEngine(buffer_seconds=30, target_fps=10)

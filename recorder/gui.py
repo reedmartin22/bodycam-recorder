@@ -125,6 +125,8 @@ class BodyCamApp:
     def _connect_stream(self, reset_buffer: bool) -> None:
         if self.stream_client is not None:
             self.stream_client.stop()
+        if reset_buffer and self.recorder.is_recording:
+            raise RuntimeError("Cannot reset the recorder while an event recording is active.")
         if reset_buffer:
             self.recorder = RecorderEngine()
             self.recording_var.set("Idle")
@@ -224,12 +226,15 @@ class BodyCamApp:
 
     def open_recordings_folder(self) -> None:
         path = str(config.recordings_dir())
-        if platform.system() == "Windows":
-            os.startfile(path)  # type: ignore[attr-defined]
-        elif platform.system() == "Darwin":
-            subprocess.Popen(["open", path])
-        else:
-            subprocess.Popen(["xdg-open", path])
+        try:
+            if platform.system() == "Windows":
+                os.startfile(path)  # type: ignore[attr-defined]
+            elif platform.system() == "Darwin":
+                subprocess.Popen(["open", path])
+            else:
+                subprocess.Popen(["xdg-open", path])
+        except OSError as exc:
+            messagebox.showerror("Unable to open folder", f"Could not open the recordings folder:\n{exc}", parent=self.root)
 
     def on_close(self) -> None:
         had_recording, saved_path = self._finalize_active_recording()

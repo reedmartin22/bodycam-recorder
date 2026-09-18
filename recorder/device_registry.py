@@ -46,6 +46,8 @@ class DeviceRegistry:
             payload = json.loads(self.path.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             payload = []
+        if not isinstance(payload, list):
+            payload = []
 
         devices = []
         for item in payload:
