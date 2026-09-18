@@ -40,6 +40,13 @@ class RecorderEngineTests(unittest.TestCase):
             self.assertTrue((output_dir / "frames" / "frame_00001.jpg").exists())
             self.assertTrue((output_dir / "frames" / "frame_00003.jpg").exists())
 
+    def test_stop_without_frames_returns_none_and_clears_active_session(self) -> None:
+        engine = RecorderEngine(buffer_seconds=30, target_fps=10, recordings_dir=Path.cwd())
+
+        self.assertTrue(engine.start_event("CAM-001", "Front Camera", timestamp=112.0))
+        self.assertIsNone(engine.stop_and_save())
+        self.assertFalse(engine.is_recording)
+
 
 if __name__ == "__main__":
     unittest.main()

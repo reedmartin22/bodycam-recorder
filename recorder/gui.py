@@ -74,6 +74,7 @@ class BodyCamApp:
         self.recorder = RecorderEngine()
         self.events: queue.Queue[StreamEvent] = queue.Queue()
         self.stream_client: MjpegStreamClient | None = None
+        self.stream_source_id = 0
         self.preview_image: ImageTk.PhotoImage | None = None
 
         self.device_name_var = tk.StringVar(value=self.device.friendly_name)
@@ -128,13 +129,20 @@ class BodyCamApp:
             self.recording_var.set("Idle")
         self.error_var.set("")
         self.connection_var.set("Connecting...")
-        self.stream_client = MjpegStreamClient(self.device.stream_url, self.events.put)
+        self.stream_source_id += 1
+        self.stream_client = MjpegStreamClient(
+            self.device.stream_url,
+            self.events.put,
+            source_id=self.stream_source_id,
+        )
         self.stream_client.start()
 
     def _process_events(self) -> None:
         try:
             while True:
                 event = self.events.get_nowait()
+                if event.source_id != self.stream_source_id:
+                    continue
                 if event.kind == "frame" and event.jpeg_bytes is not None and event.timestamp is not None:
                     self.connection_var.set("Connected")
                     self.error_var.set("")

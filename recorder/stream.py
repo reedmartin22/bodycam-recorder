@@ -10,6 +10,7 @@ from urllib.request import urlopen
 
 @dataclass(slots=True)
 class StreamEvent:
+    source_id: int
     kind: str
     message: str
     jpeg_bytes: bytes | None = None
@@ -17,10 +18,17 @@ class StreamEvent:
 
 
 class MjpegStreamClient:
-    def __init__(self, stream_url: str, event_callback: Callable[[StreamEvent], None], reconnect_delay: float = 2.0) -> None:
+    def __init__(
+        self,
+        stream_url: str,
+        event_callback: Callable[[StreamEvent], None],
+        reconnect_delay: float = 2.0,
+        source_id: int = 0,
+    ) -> None:
         self.stream_url = stream_url
         self.event_callback = event_callback
         self.reconnect_delay = reconnect_delay
+        self.source_id = source_id
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
 
@@ -38,18 +46,18 @@ class MjpegStreamClient:
 
     def _run(self) -> None:
         while not self._stop_event.is_set():
-            self.event_callback(StreamEvent(kind="status", message="Connecting to camera..."))
+            self.event_callback(StreamEvent(source_id=self.source_id, kind="status", message="Connecting to camera..."))
             try:
                 self._consume_stream()
             except (HTTPError, URLError, TimeoutError, OSError) as exc:
-                self.event_callback(StreamEvent(kind="error", message=f"Camera offline: {exc}"))
+                self.event_callback(StreamEvent(source_id=self.source_id, kind="error", message=f"Camera offline: {exc}"))
             if not self._stop_event.is_set():
                 time.sleep(self.reconnect_delay)
 
     def _consume_stream(self) -> None:
         buffer = bytearray()
         with urlopen(self.stream_url, timeout=5) as response:
-            self.event_callback(StreamEvent(kind="status", message="Camera connected"))
+            self.event_callback(StreamEvent(source_id=self.source_id, kind="status", message="Camera connected"))
             while not self._stop_event.is_set():
                 chunk = response.read(4096)
                 if not chunk:
@@ -66,6 +74,7 @@ class MjpegStreamClient:
                     del buffer[: end + 2]
                     self.event_callback(
                         StreamEvent(
+                            source_id=self.source_id,
                             kind="frame",
                             message="frame",
                             jpeg_bytes=jpeg_bytes,

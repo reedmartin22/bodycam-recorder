@@ -47,7 +47,14 @@ class DeviceRegistry:
         except json.JSONDecodeError:
             payload = []
 
-        devices = [Device.from_dict(item) for item in payload if item]
+        devices = []
+        for item in payload:
+            if not item:
+                continue
+            try:
+                devices.append(Device.from_dict(item))
+            except (KeyError, TypeError, ValueError):
+                continue
         if not devices:
             devices = [_default_device()]
             self.save_devices(devices)
