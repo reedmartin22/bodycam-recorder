@@ -1,0 +1,7 @@
+[
+  {
+    "device_id": "SIMULATOR-LOCAL",
+    "friendly_name": "Local Simulated Camera",
+    "stream_url": "http://127.0.0.1:8000/stream"
+  }
+]
