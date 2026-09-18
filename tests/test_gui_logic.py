@@ -72,7 +72,8 @@ class GuiLogicTests(unittest.TestCase):
         app = object.__new__(BodyCamApp)
         recorder = RecorderEngine(buffer_seconds=30, target_fps=10)
         recorder.start_event("CAM-001", "Front Camera", timestamp=1.0)
-        app.stream_client = None
+        current_client = DummyClient("old", None, source_id=1)
+        app.stream_client = current_client
         app.recorder = recorder
         app.recording_var = DummyVar()
         app.error_var = DummyVar()
@@ -83,6 +84,8 @@ class GuiLogicTests(unittest.TestCase):
 
         with self.assertRaises(RuntimeError):
             BodyCamApp._connect_stream(app, reset_buffer=True)
+
+        self.assertFalse(current_client.stopped)
 
     def test_stop_and_save_warns_when_event_has_no_frames(self) -> None:
         app = object.__new__(BodyCamApp)

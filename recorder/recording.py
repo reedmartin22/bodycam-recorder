@@ -89,6 +89,7 @@ class RecorderEngine:
         started_at = session.frames[0].timestamp
         recording_name = datetime.fromtimestamp(started_at, tz=timezone.utc).strftime("%Y%m%d-%H%M%S-%f")
         safe_device_id = re.sub(r"[^A-Za-z0-9._-]+", "-", session.device_id).strip("-") or "device"
+        self.recordings_dir.mkdir(parents=True, exist_ok=True)
         output_dir = self.recordings_dir / f"{recording_name}_{safe_device_id}"
         frames_dir = output_dir / "frames"
         frames_dir.mkdir(parents=True, exist_ok=True)

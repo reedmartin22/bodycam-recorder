@@ -48,6 +48,20 @@ class RecorderEngineTests(unittest.TestCase):
         self.assertIsNone(engine.stop_and_save())
         self.assertFalse(engine.is_recording)
 
+    def test_stop_and_save_creates_custom_recordings_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            recordings_dir = Path(temp_dir) / "nested" / "recordings"
+            engine = RecorderEngine(buffer_seconds=30, target_fps=10, recordings_dir=recordings_dir)
+            engine.ingest_frame(JPEG_BYTES, timestamp=100.0)
+            engine.start_event("CAM-003", "Helmet Camera", timestamp=101.0)
+            engine.ingest_frame(JPEG_BYTES, timestamp=102.0)
+
+            output_dir = engine.stop_and_save()
+
+            self.assertIsNotNone(output_dir)
+            self.assertTrue(recordings_dir.exists())
+            self.assertTrue((output_dir / "metadata.json").exists())
+
 
 if __name__ == "__main__":
     unittest.main()

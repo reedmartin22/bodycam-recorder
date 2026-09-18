@@ -123,10 +123,10 @@ class BodyCamApp:
         ttk.Button(controls, text="Quit", command=self.on_close).pack(side="right")
 
     def _connect_stream(self, reset_buffer: bool) -> None:
-        if self.stream_client is not None:
-            self.stream_client.stop()
         if reset_buffer and self.recorder.is_recording:
             raise RuntimeError("Cannot reset the recorder while an event recording is active.")
+        if self.stream_client is not None:
+            self.stream_client.stop()
         if reset_buffer:
             self.recorder = RecorderEngine()
             self.recording_var.set("Idle")

@@ -56,6 +56,8 @@ class MjpegStreamClient:
                 self._consume_stream()
             except (HTTPError, URLError, TimeoutError, OSError) as exc:
                 self.event_callback(StreamEvent(source_id=self.source_id, kind="error", message=f"Camera offline: {exc}"))
+            except Exception as exc:
+                self.event_callback(StreamEvent(source_id=self.source_id, kind="error", message=f"Camera stream error: {exc}"))
             if not self._stop_event.is_set():
                 time.sleep(self.reconnect_delay)
 
