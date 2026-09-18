@@ -105,7 +105,7 @@ class BodyCamApp:
         ttk.Label(status, text="Connection:").grid(row=0, column=0, sticky="w")
         ttk.Label(status, textvariable=self.connection_var).grid(row=0, column=1, sticky="w", padx=(8, 0))
         ttk.Label(status, text="Recording:").grid(row=1, column=0, sticky="w", pady=(6, 0))
-        ttk.Label(status, textvariable=self.recording_var).grid(row=1, column=1, sticky="w", padx=(8, 0), pady=(6, 0))
+        ttk.Label(status, textvariable=self.recording_var).grid(row=1, column=1, sticky="w", padx=(8, 0))
         ttk.Label(status, textvariable=self.error_var, foreground="#b00020", wraplength=820).grid(row=2, column=0, columnspan=3, sticky="w", pady=(8, 0))
 
         preview_frame = ttk.LabelFrame(container, text="Live Preview", padding=12)
@@ -121,6 +121,12 @@ class BodyCamApp:
         self.stop_button.pack(side="left", padx=(8, 0))
         ttk.Button(controls, text="Open Recordings Folder", command=self.open_recordings_folder).pack(side="left", padx=(8, 0))
         ttk.Button(controls, text="Quit", command=self.on_close).pack(side="right")
+
+    def _enqueue_stream_event(self, event: StreamEvent) -> None:
+        """Queue stream events when the app has a queue, including in lightweight tests."""
+        events = getattr(self, "events", None)
+        if events is not None:
+            events.put(event)
 
     def _connect_stream(self, reset_buffer: bool) -> None:
         if reset_buffer and self.recorder.is_recording:
@@ -139,7 +145,7 @@ class BodyCamApp:
         self.connection_var.set("Connecting...")
         self.stream_client = MjpegStreamClient(
             self.device.stream_url,
-            self.events.put,
+            self._enqueue_stream_event,
             source_id=self.stream_source_id,
         )
         self.stream_client.start()
