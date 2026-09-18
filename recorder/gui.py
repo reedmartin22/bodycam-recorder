@@ -128,7 +128,11 @@ class BodyCamApp:
         if self.stream_client is not None:
             self.stream_client.stop()
         if reset_buffer:
-            self.recorder = RecorderEngine()
+            self.recorder = RecorderEngine(
+                buffer_seconds=self.recorder.buffer_seconds,
+                target_fps=self.recorder.target_fps,
+                recordings_dir=self.recorder.recordings_dir,
+            )
             self.recording_var.set("Idle")
         self.error_var.set("")
         self.connection_var.set("Connecting...")
@@ -225,7 +229,7 @@ class BodyCamApp:
         )
 
     def open_recordings_folder(self) -> None:
-        path = str(config.recordings_dir())
+        path = str(self.recorder.recordings_dir)
         try:
             if platform.system() == "Windows":
                 os.startfile(path)  # type: ignore[attr-defined]

@@ -149,7 +149,7 @@ The app uses these optional environment variables:
 
 ## Tests
 
-Run the non-GUI unit tests with:
+Run the current test suite with:
 
 ```powershell
 python -m unittest discover -s tests -v
