@@ -7,6 +7,7 @@ import queue
 import subprocess
 import time
 import tkinter as tk
+from pathlib import Path
 from tkinter import messagebox, ttk
 
 from PIL import Image, ImageTk
@@ -171,9 +172,7 @@ class BodyCamApp:
         self.root.wait_window(dialog)
         if dialog.result is None:
             return
-        saved_path = None
-        if self.recorder.is_recording:
-            saved_path = self.recorder.stop_and_save()
+        had_recording, saved_path = self._finalize_active_recording()
         self.registry.upsert_device(dialog.result)
         self.device = dialog.result
         self.device_name_var.set(self.device.friendly_name)
@@ -183,6 +182,12 @@ class BodyCamApp:
             messagebox.showinfo(
                 "Recording saved",
                 f"Active recording finalized before switching devices:\n{saved_path}",
+                parent=self.root,
+            )
+        elif had_recording:
+            messagebox.showinfo(
+                "No frames captured",
+                "The previous event was finalized before switching devices, but no camera frames had been captured yet.",
                 parent=self.root,
             )
 
@@ -198,10 +203,17 @@ class BodyCamApp:
             messagebox.showinfo("Already recording", "An event recording is already in progress.", parent=self.root)
 
     def stop_and_save(self) -> None:
-        output_dir = self.recorder.stop_and_save()
+        had_recording, output_dir = self._finalize_active_recording()
         if output_dir is None:
             self.recording_var.set("Idle")
-            messagebox.showinfo("Nothing to save", "Start an event before stopping and saving.", parent=self.root)
+            if had_recording:
+                messagebox.showwarning(
+                    "No frames captured",
+                    "The event was started, but no camera frames were captured before it was stopped.",
+                    parent=self.root,
+                )
+            else:
+                messagebox.showinfo("Nothing to save", "Start an event before stopping and saving.", parent=self.root)
             return
         self.recording_var.set(f"Saved to {output_dir.name}")
         messagebox.showinfo(
@@ -220,14 +232,24 @@ class BodyCamApp:
             subprocess.Popen(["xdg-open", path])
 
     def on_close(self) -> None:
-        saved_path = None
-        if self.recorder.is_recording:
-            saved_path = self.recorder.stop_and_save()
+        had_recording, saved_path = self._finalize_active_recording()
         if self.stream_client is not None:
             self.stream_client.stop()
         if saved_path is not None:
             messagebox.showinfo("Recording saved", f"Active recording finalized at:\n{saved_path}", parent=self.root)
+        elif had_recording:
+            messagebox.showinfo(
+                "No frames captured",
+                "The active event was finalized during exit, but no camera frames had been captured yet.",
+                parent=self.root,
+            )
         self.root.destroy()
+
+    def _finalize_active_recording(self) -> tuple[bool, Path | None]:
+        had_recording = self.recorder.is_recording
+        if not had_recording:
+            return False, None
+        return True, self.recorder.stop_and_save()
 
 
 def main() -> int:
